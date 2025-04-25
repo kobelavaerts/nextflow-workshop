@@ -2059,17 +2059,17 @@ Another interesting parameter to consider adding to the configuration file is th
 
 **Singularity/Apptainer**:
 
-Similar to docker, using a singularity or apptainer image does not require you to have to adapt the pipeline script. You can run with Singularity container using the following command-line parameter: `-with-singularity [singularity-image-file]` (Apptainer support is also present), where the image is downloaded from Dockerhub as well, built on runtime and then stored in a folder `singularity/`. Re-using a singularity image is possible with:
+Similar to docker, using a singularity or apptainer image does not require you to have to adapt the pipeline script. You can run with an Apptainer container using the following command-line parameter: `-with-apptainer [apptainer-image-file]` (Singularity support is also present), where the image is downloaded from Dockerhub as well, built on runtime and then stored in a folder `apptainer/`. Re-using an apptainer image is possible with:
 
 ```groovy
-singularity.cacheDir = "/path/to/singularity"
+apptainer.cacheDir = "/path/to/apptainer"
 ```
 
-If you want to avoid entering the Singularity image as a command line parameter, you can define it in the Nextflow configuration file. For example you can add the following lines in the `nextflow.config` file:
+If you want to avoid entering the Apptainer image as a command line parameter, you can define it in the Nextflow configuration file. For example you can add the following lines in the `nextflow.config` file:
 
 ```groovy
-process.container = '/path/to/singularity.img'
-singularity.enabled = true
+process.container = '/path/to/apptainer.img'
+apptainer.enabled = true
 ```
 
 #### Profiles
