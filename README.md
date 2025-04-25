@@ -2214,7 +2214,11 @@ The order in which the configs are included matters. Configuration files include
 
 **Extra exercise 1**
 
-Complete the `nextflow.config`, `standard.config` and `params.yaml` files in the `exercises/04_configs/` folder. These config files should accompany the script `exercises/04_configs/RNAseq.nf`. Move into this directory (`cd exercises/04_configs`) and run the commmand to run this pipeline: `nextflow run RNAseq.nf -profile standard,apptainer -params-file params.yaml`.
+Complete the `nextflow.config`, `standard.config` and `params.yaml` files in the `exercises/04_configs/` folder. These config files should accompany the script `exercises/04_configs/RNAseq.nf`. Execute the following commmand to run this pipeline: 
+
+```bash
+nextflow run exercises/04_configs/RNAseq.nf -profile standard,apptainer -params-file exercises/04_configs/params.yaml
+```
 
 ****************
 
@@ -2223,6 +2227,10 @@ Complete the `nextflow.config`, `standard.config` and `params.yaml` files in the
 **Solution 1**
 
 The solution is available in the `exercises/04_configs/solutions/` folder.
+
+```bash
+nextflow run exercises/04_configs/solutions/RNAseq.nf -profile standard,apptainer -params-file exercises/04_configs/solutions/params.yaml
+```
 
 ****************
 
