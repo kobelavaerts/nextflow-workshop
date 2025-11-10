@@ -217,12 +217,12 @@ Contributors
 | Chapter | Title                                                   |
 | :---- | :------------------------------------------------         |
 | 0     | [Getting Ready](#get-ready-for-the-course)  |
-| 1     | [Building blocks](#17)  |
-| 2     | [Executing pipelines](#26)  |
-| 3     | [Creating first pipeline](#32)  |
-| 4     | [Configuration files](#38)  |
-| 5     | [Creating reports](#47)  |
-| 6     | [Project](#49)  |
+| 1     | [Building blocks](#building-blocks)  |
+| 2     | [Executing pipelines](#executing-pipelines)  |
+| 3     | [Creating first pipeline](#creating-our-first-pipeline)  |
+| 4     | [Configuration files](#configuration-files)  |
+| 5     | [Creating reports](#creating-reports)  |
+| 6     | [Project](#project)  |
 
 ## Get ready for the course
 
@@ -407,13 +407,13 @@ Writing pipelines to automate processes is not something new, Bash scripts are p
 ```bash
 #!/bin/bash
 
-blastp -query sample.fasta -outfmt 6 \
-	| head -n 10 \
-	| cut -f 2 \
-	| blastdbcmd -entry - > sequences.txt
+cat data.tsv \
+    | head -n 10 \
+    | cut -d'\t' -f 2 \
+    > third_column.tsv
 ```
 
-Starting with a shebang line, the `blastp` command is piped through multiple times to eventually result in an output file `sequences.txt`.
+Starting with a [shebang line](https://www.baeldung.com/linux/shebang-types), this script will take the first 10 lines of the `data.tsv` file, extract the third column and write it to a new file called `third_column.tsv`.
 
 <details>
 
@@ -454,10 +454,10 @@ Some thoughts or disadvantages from my personal point of view. It takes some tim
 ### Main abstractions
 Nextflow consists of four main components: channels, operators, processes and workflows.
 
-- *Channels*: contain the input of the workflows used by the processes. Channels connect processes with each other.
-- *Operators*: transform the content of channels by applying functions or transformations. Usually operators are applied on channels to get the input of a process in the right format.
-- *Processes*: define the piece of script that is actually being run (e.g. an alignment process with STAR).
-- *Workflows*: call the processes as functions with channels as input arguments, only processes defined in the workflow are run.
+- *Processes*: **execute** a piece of code (script, command line tool, etc.) using the input from channels.
+- *Channels*: **connect** processes using dataflows.
+- *Operators*: **rearrange** the content of channels by applying functions or transformations.
+- *Workflows*: **compose** the logic of the pipeline by combining processes, channels and operators.
 
 ![](docs/img/nextflow/nextflow-conceptually.png)
 
@@ -498,32 +498,31 @@ workflow {
 Besides these main building blocks, we also already highlight the existence of the `params` parameters. In the previous code block we explicitly defined some input values in the channels. However, we can define the input values into a parameter instead, that is passed on to the channel.
 
 ```groovy
-// create a parameter 'input_read'
-params.input_read = '/path/to/read_1.fq'
+// create a parameter 'input'
+params.input = '/path/to/input.tsv'
 
-// use the input_read parameter as an input for the channel
-def input_read_ch = Channel.fromPath(params.input_read)
+// use the input parameter as an input for the channel
+def input_ch = Channel.fromPath(params.input)
 ```
-Here `params.input_read = '/path/to/read_1.fq'` will create a parameter `input_read` and give it the value `'/path/to/read_1.fq'` which is used as an input for the channel. We will later see that these parameters can then be overwritten on runtime.
+Here `params.input = '/path/to/input.tsv'` will create a parameter `input` and give it the value `'/path/to/input.tsv'` which is used as an input for the channel. We will later see that these parameters can then be overwritten on runtime.
 </div>
 
 
 #### 1. Channels
-The input of the analysis is stored in a channel, these are generally files like sequencing, reference fasta, annotation files, etc. however the input can be of any kind like numbers, strings, lists, etc. To have a complete overview, we refer to the official documentation\[[4](https://www.nextflow.io/docs/latest/channel.html#)\]. Here are some examples of how a channel is being created:
+The input of the analysis is stored in a channel, these are generally files, however the input can be of any kind like numbers, strings, lists, etc. To have a complete overview, we refer to the official documentation\[[4](https://www.nextflow.io/docs/latest/channel.html#)\]. Here are some examples of how a channel can be created using channel factories:
 
 ```groovy
 // Channel consisting of strings
 def strings_ch = Channel.of('This', 'is', 'a', 'channel')
 
 // Channel consisting of a single file
-def file_ch = Channel.fromPath('data/sequencefile.fastq')
+def file_ch = Channel.fromPath('data/file.txt')
 
 // Channel consisting of multiple files by using a wildcard *
-def multfiles_ch = Channel.fromPath('data/*.fastq')
-
-// Create a channel structure from file pairs
-def pairs_ch = Channel.fromFilePairs('data/*{1,2}.fq.gz')
+def multfiles_ch = Channel.fromPath('data/*.txt')
 ```
+
+A full list of all channel factories can be found in the [documentation](https://www.nextflow.io/docs/latest/reference/channel.html#channel-factory).
 
 These channels can then be used by operators or serve as an input for the processes.
 
@@ -537,18 +536,10 @@ These channels can then be used by operators or serve as an input for the proces
 
 **Reminder: Run all exercises from the root nextflow-workshop folder**
 
-Inspect and edit the `exercises/01_building_blocks/template.nf` script. Create a channel consisting of multiple paired-end files. For more information, read [`fromFilePairs`](https://www.nextflow.io/docs/latest/reference/channel.html#fromfilepairs).
+Inspect and edit the `exercises/01_building_blocks/template.nf` script. Create an additional channel containing all files with the `csv` extension located in the `data` directory and view the contents of the channel.
 
 Once the Nextflow script is saved, run it with: `nextflow run exercises/01_building_blocks/template.nf`.
 
-Paired fastq files are provided in the `data` folder.
-
-<div class="admonition admonition-info">
-<p class="admonition-title">Note</p>
-
-Fastq files can be either single-end or paired-end. DNA is always double-stranded, single-end fastq only contain reads from a single strand, while paired end fastqs are two files, each file contains reads for one strand of the double-stranded DNA.This means in case of paired-end files, there are 2 fastq files per sample.
-
-</div>
 
 *************
 
@@ -557,51 +548,63 @@ Fastq files can be either single-end or paired-end. DNA is always double-strande
 
 **Solution 1.1**
 
-The solution is available in the file `exercises/01_building_blocks/solutions/1.1_template-paired-end.nf`.
+The solution is available in the file `exercises/01_building_blocks/solutions/1.1_fromPath.nf`.
 
-Note that the content of the channel is constructed in a following manner:
+The expected output should look like this:
 
-```bash
-[common-name, [/path/to/read1.fq, /path/to/read2.fq]]
 ```
-This is a `tuple` qualifier which we will use a lot during this workshop and discuss later again.
+This
+is
+a
+channel
+.../nextflow-workshop/data/boardgames.csv
+.../nextflow-workshop/data/crocodile_dataset.csv
+```
 
 *************
 
 
 
-##### Queue and Value channels
+##### Channels vs Values
 
-There are 2 distinct types of channel, Queue channels and Value channels. 
+There are 2 distinct types of dataflows: channels and values.
 
-- Value channels contain a single value (i.e. a string or a number) and can be used within a process any number of times, the value is never consumed. 
-- Queue channels contain one or more elements which will be consumed (used) within a process, once an element is consumed, it cannot be used again within that process. 
+- Dataflow values consist of a single value (i.e. a string or a number) and can be used within a process any number of times, the value is never consumed. 
+- Dataflow channels consist of one or more elements which will be used once within a process, once an element is used, it cannot be used again within that process. 
 
-  - A single queue channel may be used as input to multiple processes in a workflow. 
-  - Queue channels are designed for connecting the output of one process to the input of other processes.
+  - A channel can be used as input to multiple processes. Each process will receive a copy of the channel and use its elements independently.
+  - Channels are designed for connecting the output of one process to the input of other processes.
 
 ```groovy
-# Value Channels
-def value_channel1 = Channel.value(1)
-def value_channel2 = Channel.value("Hello World")
-def value_channel3 = Channel.value(["a", "b", "c"])
+# Values
+def value1 = Channel.value(1)
+def value2 = Channel.value("Hello World")
+def value3 = Channel.value(["a", "b", "c"])
 
-# Queue Channels
-def queue_channel1 = Channel.of('This', 'is', 'a', 'channel')
-def queue_channel2 = Channel.fromPath('/path/to/files/*.txt')
+# Channels
+def channel1 = Channel.of('This', 'is', 'a', 'channel')
+def channel2 = Channel.fromPath('/path/to/files/*.txt')
 
 ```
-More info about value and queue channels can be found in the [documentation](https://www.nextflow.io/docs/latest/channel.html#channel-types).
-
-#### 2. Operators
-Operators are necessary to transform the content of channels in a format that is necessary for usage in the processes. There are a plethora of different operators[[5](https://www.nextflow.io/docs/latest/operator.html?highlight=view#)], however only a handful are used extensively. Here are some examples that you might come accross:
-
-- `collect`: e.g. when using a channel consisting of multiple independent files (e.g. fastq-files) and need to be assembled for a next process (output in a list data-type).
 
 <div class="admonition admonition-info">
 <p class="admonition-title">Note</p>
 
-The nextflow documentation details whether each operator produces a queue channel or a value channel.
+In previous versions of Nextflow, channels were often reffered to as queue channels and values were often reffered to as value channels. This terminology is not used anymore in the official documentation, however you might still encounter it in older scripts or documentations.
+
+</div>
+
+More info about values and channels can be found in the [documentation](https://www.nextflow.io/docs/latest/channel.html#channel-types).
+
+#### 2. Operators
+Operators are necessary to transform the content of channels in a format that is necessary for usage in the processes. There are a plethora of different operators[[5](https://www.nextflow.io/docs/latest/operator.html?highlight=view#)], however only a handful are used extensively. Here are some examples that you might come accross:
+
+- `collect`: **transforms** a dataflow channel to a dataflow value by concatenating all entries in the channel into one list. e.g. when using a channel consisting of multiple independent files that need to be assembled for a next process
+
+<div class="admonition admonition-info">
+<p class="admonition-title">Note</p>
+
+The nextflow documentation details whether each operator produces a dataflow channel or value.
 
 </div>
 
@@ -618,7 +621,7 @@ Channel
 [1,2,3,4]
 ```
 
-- `mix`: e.g. when assembling items from multiple channels into one channel for a next process (e.g. multiqc)
+- `mix`: **combines** multiple dataflow channels into one channel by interleaving their elements.
 
   Example: [`exercises/01_building_blocks/operator_mix.nf`](https://github.com/vibbits/nextflow-workshop/blob/main/exercises/01_building_blocks/operator_mix.nf)
 
@@ -639,12 +642,10 @@ b
 z
 ```
 
-- `map`: e.g. when you would like to run your own function on each item in a channel.
+- `map`: **transforms** a dataflow channel or value by applying a function to each item in the channel or value.
 
   - The map operator is expressed as a [closure](https://www.nextflow.io/docs/latest/script.html#script-closure) (`{ ... }`)
   - By default, the items in the channel are referenced by the variable `it`. This can be changed by using the `map { item -> ... }` syntax, which is considered a best practice in the field.
-  - All functions available on the item, are available on the `it` variable within the closure.
-  - When an element is a list or tuple, you can use the `it[0]`, `it[1]`, etc. syntax to access the individual elements of your item.
 
   Example: [`exercises/01_building_blocks/operator_map.nf`](https://github.com/vibbits/nextflow-workshop/blob/main/exercises/01_building_blocks/operator_map.nf)
 
@@ -669,12 +670,16 @@ Channel
 
 **Exercise 1.2**
 
-Create a channel from a csv-file (`input.csv`) and use an operator to view the contents. Generate the channel for the `input.csv`-file which you can find in the `exercises/01_building_blocks/` folder and contains the following content:
+Create a channel from a csv-file (`input.csv`) and use an operator to view the contents. Generate the channel for the `input.csv`-file which you can find in the `exercises/01_building_blocks/` folder and is a subset of the `boardgames.csv` file located in the `data/` folder. The file looks like this:
 
-| sampleId | Read 1                        | Read 2                        |
-|----------|-------------------------------|-------------------------------|
-| 01       | data/ggal_gut_1.fq.gz         | data/ggal_gut_2.fq.gz         |
-| 02       | data/ggal_liver_1.fq.gz       | data/ggal_liver_2.fq.gz       |
+<!-- data-type="none" -->
+| boardgame | release_year |
+|-----------|---------------|
+| Brass: Birmingham | 2018 |
+| Pandemic Legacy: Season 1 | 2015 |
+| Ark Nova | 2021 |
+| Gloomhaven | 2017 |
+| Twilight Imperium: Fourth Edition | 2017 |
 
 Test your Nextflow script with: `nextflow run <name>.nf`.
 
@@ -687,7 +692,7 @@ Test your Nextflow script with: `nextflow run <name>.nf`.
 
 The solution is available in the file `exercises/01_building_blocks/solutions/1.2_template-csv.nf`
 
-The file is imported with `.fromPath()`, followed by the `splitCsv()` operator where we set the header to `True`. The last step will output how the channels are constructed. Each row is transformed into a tuple with the first element as a variable `sampleId`, the second as `forward_read` and the third as `reverse_read`.
+The file is imported with `.fromPath()`, followed by the `splitCsv()` operator where we set the header to `True`. The last step will output how the channels are constructed. Each row is transformed into a tuple with the first element as a variable `boardgame` and the second element as `release_year`.
 
 ```groovy
 def samples_ch = Channel
@@ -702,7 +707,7 @@ def samples_ch = Channel
 
 **Exercise 1.3**
 
-Building on exercise 1.2 and using the `map` operator, create 2 channels, one containing the sampleId and the forward read as a tuple and the second containing the sampleId and reverse read as a tuple. Use the `view` operator to inspect the contents of thsee channels.
+Building on exercise 1.2 and using the `map` operator, create 2 channels, one containing the name of the boardgame and the second containing the release year. Use the `view` operator to inspect the contents of these channels.
 
 ********
 
@@ -717,7 +722,7 @@ The solution is available in the file `exercises/01_building_blocks/solutions/1.
 
 
 #### 3. Processes
-Processes are the backbone of the pipeline. They represent each individual subpart of the analysis. In the code-snippet below, you can see that it consists of a couple of blocks: directives, input, output, when-clause and the script itself.
+Processes are the backbone of the pipeline. They represent each individual subpart of the analysis. In the code-snippet below, you can see that it consists of a couple of blocks: `directives`, `input`, `output` and the `script` itself.
 
 ```groovy
 process < name > {
@@ -730,15 +735,12 @@ process < name > {
    output:
     < process outputs >
 
-   when:
-    < condition >
-
-   [script|shell|exec]:
+   script:
    < user script to be executed >
 }
 ```
 
-Here are a couple of examples of processes:
+Here is an example of a process:
 
 
 > **Writing a file**
@@ -752,7 +754,7 @@ Here are a couple of examples of processes:
 >     val strs
 >
 >     output:
->     path 'result.txt'
+>     path 'result.txt', emit: results
 >
 >     script:
 >     """
@@ -761,120 +763,110 @@ Here are a couple of examples of processes:
 > }
 > ```
 
-> **FastQC**
->
-> Quality control process with `fastqc`
->
-> ```groovy
-> process fastqc {
->     input:
->     tuple val(sample), path(reads)
->
->     output:
->     path("*_fastqc.{zip,html}")
->
->     script:
->     """
->     fastqc ${reads}
->     """
-> }
-> ```
-
-<div class="admonition admonition-info">
-<p class="admonition-title">Note</p>
-
-FastQC is a tool to determine the quality of the FASTQ files.
-
-</div>
-
-> **Salmon**
->
-> Quantifying in mapping-based mode with `salmon`
->
-> ```groovy
-> process salmon_quant {
->     input:
->     path index
->     tuple val(pair_id), path(reads)
->
->     output:
->     path pair_id
->
->     script:
->     """
->     salmon quant --threads $task.cpus --libType=U -i $index -1 ${reads[0]} -2 ${reads[1]} -o $pair_id
->     """
-> }
-> ```
-
-<div class="admonition admonition-info">
-<p class="admonition-title">Note</p>
-
-Salmon is a tool to figure out how much of different RNA pieces (called transcripts) are present in a sample. 
-
-</div>
-
-> **Trimming & quality filtering reads**
->
-> Trimming adapters & quality filtering with `trimmomatic`
->
-> ```groovy
-> process trimmomatic {
->     // directives
->     publishDir "$params.outdir/trimmed-reads", mode: 'copy', overwrite: true
->     label 'low'
->     container 'quay.io/biocontainers/trimmomatic:0.35--6'
->
->     input:
->     tuple val(sample), path(reads)
->
->     output:
->     tuple val(sample), path("${sample}*_P.fq"), emit: trim_fq
->     tuple val(sample), path("${sample}*_U.fq"), emit: untrim_fq
->
->     script:
->     """
->     trimmomatic PE -threads $params.threads ${reads[0]} ${reads[1]} ${sample}1_P.fq ${sample}1_U.fq ${sample}2_P.fq ${sample}2_U.fq $params.slidingwindow $params.avgqual
->     """
-> }
-> ```
-
-<div class="admonition admonition-info">
-<p class="admonition-title">Note</p>
-
-Trimmomatic is a tool used to trim FASTQ reads. Trimming is sometimes necessary to trim low quality bases, or unwanted sequences from the sequenced reads to make sure the reads only contain high quality basepairs present in the sequenced genome. An example of unwanted sequences that can be trimmed are adapter sequences, which are present in all reads and function as primer sites to start the sequencing.
-
-</div>
-
 ---
 
-The **input** declaration block defines the channels where the process expects to receive its data. The input defenition starts with an input qualifier followed by the input name ([more information](https://www.nextflow.io/docs/latest/process.html#inputs)). The most frequently used qualifiers are `val`, `path` and `tuple`, respectively representing a value (e.g. numbers or strings), a path towards a file and a combination of input values having one of the available qualifiers (e.g. tuple containing a value and two files).
+##### Inputs
 
-<div class="admonition admonition-warning">
-<p class="admonition-title">Warning</p>
+The **input** declaration block defines the structure of the dataflows the process expects to receive. Each input starts with an input qualifier followed by the input name. The most frequently used qualifiers are:
 
-The keyword `from` is a remainder of DSL1 and is not used in DSL2. Therefore we can neglect this keyword in this course even though we will see it appear a lot in older tutorials.
+- `val`: represents a single value (e.g. numbers or strings)
+- `path`: declares that a file object is expected here. This should always be used when a file is expected as input.
+- `tuple`: a combination of input values having one of the available qualifiers (e.g. tuple containing a value and two files).
 
-</div>
+This example shows the input block of a process expecting two inputs. The first input should be a tuple consisting of an identifier and a filename. The second input is a single value representing the number of threads to be used.
 
+```groovy
+input:
+    tuple val(id), path(fq)
+    val threads
+```
 
-The **output** declaration block defines the channels created by the process to send out the results produced. They are build similar as the input declarations, using a qualifier (e.g. `val`, `path` and `tuple`) followed by the generated output. The output of a process usually serves as the input of another process, hence with the `emit` option we can make a name identifier that can be used to reference the output (as a channel) in the external scope. In the `trimmomatic` example we can access the generated filtered and trimmed paired reads in the external scope as such: `trimmomatic.out.trim_fq`.
+To see a full list of input qualifiers, please refer to the [documentation](https://www.nextflow.io/docs/latest/process.html#inputs).
+
+##### Outputs
+
+The **output** declaration block defines the structure of the dataflows that need to be created from the results of the analysis. They are very similar to the input declarations, using a qualifier (e.g. `val`, `path` and `tuple`) followed by the name of generated output. The output of a process usually serves as the input of another process.
+
+The `emit` option can be used to assign a name to the output so it can be referenced in the workflow code in a clear way. In the following example we can access the results using the following notation: `valuesToFile.out.results`.
+
+```groovy
+process valuesToFile {
+
+    ...
+
+    output:
+    path 'result.txt', emit: results
+
+    ...
+
+}
+```
 
 <div class="admonition admonition-info">
 <p class="admonition-title">Note</p>
 
-By default, the output of a process is a queue channel, however, when all of the input channels into a process are value channels, the output will automaticaly also be a value channel.
+By default, the output of a process is a dataflow channel, however, when all of the input channels into a process are dataflow values, the output will automaticaly also be a value.
 
 </div>
 
-**Directives** are optional settings that affect the process execution, and are defined at the top of the process (see `trimmomatic` example). They can be any of the [following long list of possibilities](https://www.nextflow.io/docs/latest/reference/process.html#directives). We can define the directory where the outputs should be published, add labels or tags, define containers used for the virtual environment of the process, and much more. We will discover some of the possibilities along the way.
+##### Directives
 
-**Conditionals** are not considered in this course.
+**Directives** are optional settings that affect the process execution, and are defined at the top of the process. They can be any of the [following long list of possibilities](https://www.nextflow.io/docs/latest/reference/process.html#directives). These are some of the most commonly used directives:
 
----
+- `publishDir`: define how the data should be stored in the output directory
+- `container`: define the container that should be used for the process
+- `cpus`: define the number of CPUs that should be used for the process
+- `memory`: define the amount of memory that should be used for the process
+- `time`: define the maximum runtime for the process
 
+We will discover some of the possibilities further in the course.
 
-Each process is executed independently and isolated from any other process. They communicate via asynchronous FIFO queues, i.e. one process will wait for the output of another and then runs reactively when the channel has contents.
+##### Execution
+
+The **script** block contains the actual code that will be executed. This can be any code that can be executed in a bash shell, e.g. bash commands, Python scripts, R scripts, etc.
+
+This is an example of a `script` block that creates a file called `result.txt` containing the values of the input channels `nums` and `strs`.
+
+```groovy
+script:
+"""
+echo $nums and $strs > result.txt
+"""
+```
+
+To run code in other languages than bash, you can add a shebang line at the top of the script. For example, to run a Python script, you can use the following:
+
+```groovy
+script:
+"""
+#!/usr/bin/env python3
+
+firstWord = 'hello'
+secondWord = 'folks'
+print(f'{firstWord} {secondWord}')
+"""
+```
+
+Run the [`exercises/01_building_blocks/hellofrompython.nf`](https://github.com/vibbits/nextflow-workshop/blob/main/exercises/01_building_blocks/hellofrompython.nf) script to see how this works.
+
+Check the output of the script in the `.command.out` file of the work-directory.
+
+<div class="admonition admonition-info">
+<p class="admonition-title">Note</p>
+
+The work-directory of the last process can be seen in the output of nextflow.
+
+`[f6/4916cd] process > python [100%] 1 of 1 ✔`
+
+In this case, the output would be in the directory starting `work/f6/4916cd...`
+
+</div>
+
+Nextflow also contains an `exec` block. This will not be discussed in this course as it is rarely used in Nextflow pipelines. You can read more about them in the [documentation](https://www.nextflow.io/docs/latest/process.html#native-execution).
+
+##### Execution order
+
+Each process is executed independently and isolated from any other process. They communicate via asynchronous FIFO queues, i.e. one process will wait for a full set of inputs to be ready before it starts executing. This means that a process that depends on the output of another process will wait until that process is finished. The following figure illustrates this concept:
 
 
 ![](docs/img/nextflow/asynchronous-FIFO.png)
@@ -898,39 +890,6 @@ executor >  local (10)
 [4b/aff57f] process > whosfirst (10) [100%] 10 of 10
 ```
 
----
-
-A script, as part of the process, can be written in any language (bash, Python, Perl, Ruby, etc.). This allows to add self-written scripts in the pipeline. The script can be written in the process itself, or can be present as a script in another folder and is run from the process here. An example can be found in [`exercises/01_building_blocks/hellofrompython.nf`](https://github.com/vibbits/nextflow-workshop/blob/main/exercises/01_building_blocks/hellofrompython.nf).
-
-```groovy
-#!/usr/bin/env nextflow
-
-process python {
-
-    script:
-    """
-    #!/usr/bin/env python3
-
-    firstWord = 'hello'
-    secondWord = 'folks'
-    print(f'{firstWord} {secondWord}')
-    """
-}
-```
-
-Check the output of the script in the `.command.out` file of the work-directory.
-
-<div class="admonition admonition-info">
-<p class="admonition-title">Note</p>
-
-The work-directory of the last process can be seen in the output of nextflow.
-
-`[f6/4916cd] process > python [100%] 1 of 1 ✔`
-
-In this case, the output would be in the directory starting `work/f6/4916cd...`
-
-</div>
-
 ##### Exercises
 
     {{0-2}}
@@ -952,7 +911,7 @@ The process should be adapted, containing the following tag line in the directiv
 ```groovy
 // Defining the process that is executed
 process valuesToFile {
-    tag  "$nums,$strs"
+    tag "$nums,$strs"
 
     input:
     val nums
@@ -979,7 +938,7 @@ tail -f nf.log
 
 **Exercise 1.5**
 
-The script in `exercises/01_building_blocks/channel_types.nf` uses two queue channels as the input to a process, but only a single value from the `y` channel is utilized, this is because the single value in the `x` channel is consumed leaving an empty channel. Change channel `x` to be a value channel, so that channel `y` is completely consumed.
+The script in `exercises/01_building_blocks/channel_types.nf` uses two dataflow channels as the input to a process, but only a single value from the `y` channel is utilized, this is because the single value in the `x` channel is consumed leaving an empty channel. Change channel `x` to be a dataflow value, so that channel `y` is completely consumed.
 
 ****************
 
@@ -1018,11 +977,13 @@ You should get the following output:
 #### 4. Workflows
 Defining processes will not produce anything, because you need another part that actually calls the process and connects it to the input channel. Thus, in the `workflow` scope, the processes are called as functions with input arguments being the channels.
 
-The output that is generated in a process, needs to be emited (`emit`) in order to serve as an input for a next process. The `trimmomatic` process defined above emits the paired trimmed and unpaired trimmed (not passing the filtering thresholds) reads as two separate outputs, `trim_fq` and `untrim_fq` respectively. The following workflow calls the `trimmomatic` process with `reads` as its input channel. Now we can access the output of this process using `trimmomatic.out.trim_fq`.
+The output that is generated in a process, needs to be emited (`emit`) in order to serve as an input for a next process.
 
 ```groovy
 workflow {
-    trimmomatic(reads)
+    def input_ch = Channel.of(1,2,3)
+    process1(input_ch)
+    process2(process1.out.output_ch)
 }
 ```
 
@@ -1076,16 +1037,20 @@ You need to execute a hypothetical task for each record in a CSV file. Write a N
 2. Create a process that:
 
     - Accepts a tuple as input channel with the information from the csv-file.
-    - Has the following script: `echo your_command --sample $sampleId --reads $read1 $read2`
+    - Has the following script: `echo $boardgame released in $release_year`
 
 3. Create a workflow that calls the process with the input channel.
 
 Given the file `input.csv` (in the exercises folder) with the following content:
 
-| sampleId | Read 1                        | Read 2                        |
-|----------|-------------------------------|-------------------------------|
-| 01       | data/ggal_gut_1.fq.gz         | data/ggal_gut_2.fq.gz         |
-| 02       | data/ggal_liver_1.fq.gz       | data/ggal_liver_2.fq.gz       |
+<!-- data-type="none" -->
+| boardgame | release_year |
+|-----------|---------------|
+| Brass: Birmingham | 2018 |
+| Pandemic Legacy: Season 1 | 2015 |
+| Ark Nova | 2021 |
+| Gloomhaven | 2017 |
+| Twilight Imperium: Fourth Edition | 2017 |
 
 *******
 
@@ -1094,33 +1059,37 @@ Given the file `input.csv` (in the exercises folder) with the following content:
 
 **Solution ext 2**
 
-Find the solution also in `split-csv.nf`. Inspect the command that has ran in the intermediate `work/` directory following the hashed folders and look in the file `.command.sh`.
+Find the solution also in [`exercises/01_building_blocks/solutions/ex.2_split-csv.nf`](https://github.com/nextflow-io/nextflow/blob/main/exercises/01_building_blocks/solutions/ex.2_split-csv.nf). Inspect the command that has ran in the intermediate `work/` directory following the hashed folders and look in the file `.command.sh`.
 
 ```groovy
 #!/usr/bin/env nextflow
 
-params.input_csv = 'input.csv'
+params.input_csv = 'exercises/01_building_blocks/input.csv'
 
-process split_csv {
+process release_info {
+    debug true
+
     input:
-    tuple val(sampleId), path(read1), path(read2)
+    tuple val(boardgame), val(release_year)  
 
     script:
     """
-    echo your_command --sample $sampleId --reads $read1 $read2
+    echo $boardgame released in $release_year
     """
 }
 
 workflow {
-    def samples_ch = Channel
-                .fromPath(params.input_csv)
-                .splitCsv(header:true)
-                .map{ row -> tuple(row.sampleId, file(row.forward_read), file(row.reverse_read)) }
-                .view()
-    split_csv(samples_ch)
+    def games_ch = Channel
+                    .fromPath(params.input_csv)
+                    .splitCsv(header:true)
+                    .map{ row-> tuple(row.boardgame, row.release_year) }
+
+    games_ch.view()
+    release_info(games_ch)
 }
 ```
 ************
+
 
 
 ## Executing pipelines
