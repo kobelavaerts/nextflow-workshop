@@ -670,7 +670,15 @@ Channel
 
 **Exercise 1.2**
 
-Create a channel from a csv-file (`input.csv`) and use an operator to view the contents. Generate the channel for the `input.csv`-file which you can find in the `exercises/01_building_blocks/` folder and is a subset of the `boardgames.csv` file located in the `data/` folder. The file looks like this:
+Create a channel from a CSV file and use an operator designed for CSV data to view the contents. 
+
+1. Use the `input.csv` file located in folder: `exercises/01_building_blocks/`. This file is a subset of `boardgames.csv` located in the `data/` directory.
+2. Your task:
+
+    - Generate a channel that reads `input.csv`
+    - Apply the appropriate CSV-specific operator to display the channel’s contents
+
+The file looks like this:
 
 <!-- data-type="none" -->
 | boardgame | release_year |
