@@ -15,8 +15,8 @@ process foo {
 }
 
 workflow {
-  def x = Channel.value(1)
-  def y = Channel.of('a', 'b', 'c')
+  def x = channel.value(1)
+  def y = channel.of('a', 'b', 'c')
   foo(x, y)
   foo.out.view()
 }
