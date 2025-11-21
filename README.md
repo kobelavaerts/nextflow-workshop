@@ -75,7 +75,7 @@ Let's start!
 
 ## General context
 
-This repository contains the materials (exercises) for the workshop on Nextflow on 28-29th April 2025.
+This repository contains the materials (exercises) for the workshop on Nextflow on 27-28th November 2025.
 
 The **presentations** which goes alongside this material can be found [in the Lesson overview: Slides](#2) .
 
@@ -324,7 +324,7 @@ You are free to connect to the cluster however you want, but the above 2 methods
 - Clone this repository into the folder: `git clone https://github.com/vibbits/nextflow-workshop.git`
 - For the Gent cluster usage, in any terminal where you want to run your excercises 
 
-  1. Load the nextflow module: `module load Nextflow/24.10.2`
+  1. Load the nextflow module: `module load Nextflow/25.04.8`
   2. Export the following envrionment variables - these are required so that your home folder is not filled when building and storing apptainer images
    - `export APPTAINER_CACHEDIR=${VSC_SCRATCH}/.apptainer_cache`
    - `export APPTAINER_TMPDIR=${VSC_SCRATCH}/.apptainer_tmp`
@@ -350,7 +350,7 @@ Here are some great tips for learning and to get inspired for writing your own p
 - Curated ready-to-use analysis pipelines by nf-core ([link](https://nf-co.re/))
 - Model example pipeline on Variant Calling Analysis with NGS RNA-Seq data developed by CRG ([link](https://github.com/CRG-CNAG/CalliNGS-NF))
 - Tutorial by Andrew Severin ([link](https://bioinformaticsworkbook.org/dataAnalysis/nextflow/02_creatingAworkflow.html#gsc.tab=0))
-- Nextflow community fundamentals training ([link](https://training.nextflow.io/basic_training/))
+- Nextflow community training portal ([link](https://training.nextflow.io))
 
 --------------------------------------------
 
