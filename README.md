@@ -748,7 +748,7 @@ process < name > {
 }
 ```
 
-Here is an example of a process:
+Here are a couple of example processes:
 
 
 > **Writing a file**
@@ -770,6 +770,91 @@ Here is an example of a process:
 >     """
 > }
 > ```
+
+> **FastQC**
+>
+> Quality control process with `fastqc`
+>
+> ```groovy
+> process fastqc {
+>     input:
+>     tuple val(sample), path(reads)
+>
+>     output:
+>     path("*_fastqc.{zip,html}")
+>
+>     script:
+>     """
+>     fastqc ${reads}
+>     """
+> }
+> ```
+
+<div class="admonition admonition-info">
+<p class="admonition-title">Note</p>
+
+FastQC is a tool to determine the quality of the FASTQ files.
+
+</div>
+
+> **Salmon**
+>
+> Quantifying in mapping-based mode with `salmon`
+>
+> ```groovy
+> process salmon_quant {
+>     input:
+>     path index
+>     tuple val(pair_id), path(reads)
+>
+>     output:
+>     path pair_id
+>
+>     script:
+>     """
+>     salmon quant --threads $task.cpus --libType=U -i $index -1 ${reads[0]} -2 ${reads[1]} -o $pair_id
+>     """
+> }
+> ```
+
+<div class="admonition admonition-info">
+<p class="admonition-title">Note</p>
+
+Salmon is a tool to figure out how much of different RNA pieces (called transcripts) are present in a sample. 
+
+</div>
+
+> **Trimming & quality filtering reads**
+>
+> Trimming adapters & quality filtering with `trimmomatic`
+>
+> ```groovy
+> process trimmomatic {
+>     // directives
+>     publishDir "$params.outdir/trimmed-reads", mode: 'copy', overwrite: true
+>     label 'low'
+>     container 'quay.io/biocontainers/trimmomatic:0.35--6'
+>
+>     input:
+>     tuple val(sample), path(reads)
+>
+>     output:
+>     tuple val(sample), path("${sample}*_P.fq"), emit: trim_fq
+>     tuple val(sample), path("${sample}*_U.fq"), emit: untrim_fq
+>
+>     script:
+>     """
+>     trimmomatic PE -threads $params.threads ${reads[0]} ${reads[1]} ${sample}1_P.fq ${sample}1_U.fq ${sample}2_P.fq ${sample}2_U.fq $params.slidingwindow $params.avgqual
+>     """
+> }
+> ```
+
+<div class="admonition admonition-info">
+<p class="admonition-title">Note</p>
+
+Trimmomatic is a tool used to trim FASTQ reads. Trimming is sometimes necessary to trim low quality bases, or unwanted sequences from the sequenced reads to make sure the reads only contain high quality basepairs present in the sequenced genome. An example of unwanted sequences that can be trimmed are adapter sequences, which are present in all reads and function as primer sites to start the sequencing.
+
+</div>
 
 ---
 
