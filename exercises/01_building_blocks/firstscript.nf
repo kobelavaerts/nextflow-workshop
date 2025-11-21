@@ -27,8 +27,8 @@ process valuesToFile {
 // Running a workflow with the defined processes  
 workflow {
     // Creating a channel
-    def numbers_ch = Channel.of(1,2,3)
-    def strings_ch = Channel.of('a','b')
+    def numbers_ch = channel.of(1,2,3)
+    def strings_ch = channel.of('a','b')
 
     valuesToFile(numbers_ch, strings_ch)
 }
