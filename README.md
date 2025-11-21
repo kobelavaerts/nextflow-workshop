@@ -2059,17 +2059,17 @@ Another interesting parameter to consider adding to the configuration file is th
 
 **Singularity/Apptainer**:
 
-Similar to docker, using a singularity or apptainer image does not require you to have to adapt the pipeline script. You can run with Singularity container using the following command-line parameter: `-with-singularity [singularity-image-file]` (Apptainer support is also present), where the image is downloaded from Dockerhub as well, built on runtime and then stored in a folder `singularity/`. Re-using a singularity image is possible with:
+Similar to docker, using a singularity or apptainer image does not require you to have to adapt the pipeline script. You can run with an Apptainer container using the following command-line parameter: `-with-apptainer [apptainer-image-file]` (Singularity support is also present), where the image is downloaded from Dockerhub as well, built on runtime and then stored in a folder `apptainer/`. Re-using an apptainer image is possible with:
 
 ```groovy
-singularity.cacheDir = "/path/to/singularity"
+apptainer.cacheDir = "/path/to/apptainer"
 ```
 
-If you want to avoid entering the Singularity image as a command line parameter, you can define it in the Nextflow configuration file. For example you can add the following lines in the `nextflow.config` file:
+If you want to avoid entering the Apptainer image as a command line parameter, you can define it in the Nextflow configuration file. For example you can add the following lines in the `nextflow.config` file:
 
 ```groovy
-process.container = '/path/to/singularity.img'
-singularity.enabled = true
+process.container = '/path/to/apptainer.img'
+apptainer.enabled = true
 ```
 
 #### Profiles
@@ -2214,7 +2214,11 @@ The order in which the configs are included matters. Configuration files include
 
 **Extra exercise 1**
 
-Complete the `nextflow.config`, `standard.config` and `params.yaml` files in the `exercises/04_configs/` folder. These config files should accompany the script `exercises/04_configs/RNAseq.nf`. Move into this directory (`cd exercises/04_configs`) and run the commmand to run this pipeline: `nextflow run RNAseq.nf -profile standard,apptainer -params-file params.yaml`.
+Complete the `nextflow.config`, `standard.config` and `params.yaml` files in the `exercises/04_configs/` folder. These config files should accompany the script `exercises/04_configs/RNAseq.nf`. Execute the following commmand to run this pipeline: 
+
+```bash
+nextflow run exercises/04_configs/RNAseq.nf -profile standard,apptainer -params-file exercises/04_configs/params.yaml
+```
 
 ****************
 
@@ -2223,6 +2227,10 @@ Complete the `nextflow.config`, `standard.config` and `params.yaml` files in the
 **Solution 1**
 
 The solution is available in the `exercises/04_configs/solutions/` folder.
+
+```bash
+nextflow run exercises/04_configs/solutions/RNAseq.nf -profile standard,apptainer -params-file exercises/04_configs/solutions/params.yaml
+```
 
 ****************
 
@@ -2420,7 +2428,7 @@ The following docker containers will work well with Nextflow for the pipeline yo
 * multiqc: `multiqc/multiqc:v1.25.1`
 * DADA2: `blekhmanlab/dada2:1.26.0` 
 * Python: `python:slim-bullseye` 
-* Cutadapt: `biocontainers/cutadapt:4.7--py310h4b81fae_1`
+* Cutadapt: `quay.io/biocontainers/cutadapt:4.7--py310h4b81fae_1`
 
 MultiQC is a tool to summarize quality control metrics coming from different tools for multiple samples. E.g. this is used to create a summary of all quality control metrics determined by FastQ for all samples in the pipeline run.
 
