@@ -681,13 +681,14 @@ Create a channel from a CSV file and use an operator designed for CSV data to vi
 The file looks like this:
 
 <!-- data-type="none" -->
-| boardgame | release_year |
-|-----------|---------------|
-| Brass: Birmingham | 2018 |
-| Pandemic Legacy: Season 1 | 2015 |
-| Ark Nova | 2021 |
-| Gloomhaven | 2017 |
-| Twilight Imperium: Fourth Edition | 2017 |
+| boardgame                         | release\_year |
+| --------------------------------- | ------------- |
+| Brass: Birmingham                 | 2018          |
+| Pandemic Legacy: Season 1         | 2015          |
+| Ark Nova                          | 2021          |
+| Gloomhaven                        | 2017          |
+| Twilight Imperium: Fourth Edition | 2017          |
+
 
 Test your Nextflow script with: `nextflow run <name>.nf`.
 
@@ -715,7 +716,11 @@ def samples_ch = Channel
 
 **Exercise 1.3**
 
-Building on exercise 1.2 and using the `map` operator, create 2 channels, one containing the name of the boardgame and the second containing the release year. Use the `view` operator to inspect the contents of these channels.
+Building on exercise 1.2 and using the `map` operator, create 3 channels:
+
+1. A channel containing the name of the boardgame 
+2. A channel containing the release year of the boardgame
+3. A channel containing the name of the boardgame and the release year as a [tuple](https://www.nextflow.io/docs/latest/script.html#tuples). Use the `view` operator to inspect the contents of these channels.
 
 ********
 
@@ -748,8 +753,11 @@ process < name > {
 }
 ```
 
+##### Examples
+
 Here are a couple of example processes:
 
+** Genomics **
 
 > **Writing a file**
 >
@@ -855,6 +863,67 @@ Salmon is a tool to figure out how much of different RNA pieces (called transcri
 Trimmomatic is a tool used to trim FASTQ reads. Trimming is sometimes necessary to trim low quality bases, or unwanted sequences from the sequenced reads to make sure the reads only contain high quality basepairs present in the sequenced genome. An example of unwanted sequences that can be trimmed are adapter sequences, which are present in all reads and function as primer sites to start the sequencing.
 
 </div>
+
+---
+
+** Proteomics **
+
+>** Create decoy peptide database  **
+>
+>  Create decoy peptide database with `openms`
+> 
+> ```groovy
+> process openms_decoydatabase {
+>     // directives
+>     publishDir "$params.outdir/decoy_database", mode: 'copy', overwrite: true
+>     label 'med'
+>     container 'biocontainers/openms:3.4.1--h81ffffe_1'
+>
+>     input:
+>     path(fasta)
+>
+>     output:
+>     path("decoy.fasta"), emit: decoy_fasta
+>
+>     script:
+>     """
+>     DecoyDatabase -in $fasta -out decoy.fasta -threads $task.cpus
+>     """
+> }
+> ```
+
+---
+
+** Imaging **
+
+>** Cell Segmentation **
+>
+> Cell segmentation using `cellpose`
+> 
+> ```groovy
+> process cellpose {
+>     // directives
+>     publishDir "$params.outdir/masks", mode: 'copy', overwrite: true, pattern: "*masks.tif"
+>     label 'med'
+>     container 'docker.io/biocontainers/cellpose:3.1.0_cv1'
+>
+>     input:
+>     tuple val(sample), path(image)
+>     path(model)
+>
+>     output:
+>     tuple val(sample), path("*masks.tif"), emit: mask
+>     tuple val(sample), path("*flows.tif"), emit: flows
+>
+>     script:
+>     def model_command = model ? "--pretrained_model ${model}" : ""
+>
+>     """
+>     cellpose --image_path ${image} --save_tif ${model_command}
+>     """
+> }
+> ```
+
 
 ---
 
