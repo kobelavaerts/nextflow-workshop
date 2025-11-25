@@ -485,8 +485,8 @@ process valuesToFile {
 // Running a workflow with the defined processes
 workflow {
     // Creating a channel
-    def numbers_ch = Channel.of(1,2,3)
-    def strings_ch = Channel.of('a','b')
+    def numbers_ch = channel.of(1,2,3)
+    def strings_ch = channel.of('a','b')
 
     valuesToFile(numbers_ch, strings_ch)
 }
@@ -502,7 +502,7 @@ Besides these main building blocks, we also already highlight the existence of t
 params.input = '/path/to/input.tsv'
 
 // use the input parameter as an input for the channel
-def input_ch = Channel.fromPath(params.input)
+def input_ch = channel.fromPath(params.input)
 ```
 Here `params.input = '/path/to/input.tsv'` will create a parameter `input` and give it the value `'/path/to/input.tsv'` which is used as an input for the channel. We will later see that these parameters can then be overwritten on runtime.
 </div>
@@ -513,13 +513,13 @@ The input of the analysis is stored in a channel, these are generally files, how
 
 ```groovy
 // Channel consisting of strings
-def strings_ch = Channel.of('This', 'is', 'a', 'channel')
+def strings_ch = channel.of('This', 'is', 'a', 'channel')
 
-// Channel consisting of a single file
-def file_ch = Channel.fromPath('data/file.txt')
+// channel consisting of a single file
+def file_ch = channel.fromPath('data/file.txt')
 
 // Channel consisting of multiple files by using a wildcard *
-def multfiles_ch = Channel.fromPath('data/*.txt')
+def multfiles_ch = channel.fromPath('data/*.txt')
 ```
 
 A full list of all channel factories can be found in the [documentation](https://www.nextflow.io/docs/latest/reference/channel.html#channel-factory).
@@ -577,13 +577,13 @@ There are 2 distinct types of dataflows: channels and values.
 
 ```groovy
 # Values
-def value1 = Channel.value(1)
-def value2 = Channel.value("Hello World")
-def value3 = Channel.value(["a", "b", "c"])
+def value1 = channel.value(1)
+def value2 = channel.value("Hello World")
+def value3 = channel.value(["a", "b", "c"])
 
 # Channels
-def channel1 = Channel.of('This', 'is', 'a', 'channel')
-def channel2 = Channel.fromPath('/path/to/files/*.txt')
+def channel1 = channel.of('This', 'is', 'a', 'channel')
+def channel2 = channel.fromPath('/path/to/files/*.txt')
 
 ```
 
@@ -612,7 +612,7 @@ The nextflow documentation details whether each operator produces a dataflow cha
   Example: [`exercises/01_building_blocks/operator_collect.nf`](https://github.com/vibbits/nextflow-workshop/blob/main/exercises/01_building_blocks/operator_collect.nf)
 
 ```groovy
-Channel
+channel
     .of( 1, 2, 3, 4 )
     .collect()
     .view()
@@ -626,9 +626,9 @@ Channel
   Example: [`exercises/01_building_blocks/operator_mix.nf`](https://github.com/vibbits/nextflow-workshop/blob/main/exercises/01_building_blocks/operator_mix.nf)
 
 ```groovy
-def c1 = Channel.of( 1,2,3 )
-def c2 = Channel.of( 'a','b' )
-def c3 = Channel.of( 'z' )
+def c1 = channel.of( 1,2,3 )
+def c2 = channel.of( 'a','b' )
+def c3 = channel.of( 'z' )
 
 c1 .mix(c2,c3)
    .view()
@@ -650,7 +650,7 @@ z
   Example: [`exercises/01_building_blocks/operator_map.nf`](https://github.com/vibbits/nextflow-workshop/blob/main/exercises/01_building_blocks/operator_map.nf)
 
 ```groovy
-Channel
+channel
     .of( 1, 2, 3, 4, 5 )
     .map { number -> number * number }
     .view()
@@ -704,7 +704,7 @@ The solution is available in the file `exercises/01_building_blocks/solutions/1.
 The file is imported with `.fromPath()`, followed by the `splitCsv()` operator where we set the header to `True`. The last step will output how the channels are constructed. Each row is transformed into a tuple with the first element as a variable `boardgame` and the second element as `release_year`.
 
 ```groovy
-def samples_ch = Channel
+def samples_ch = channel
                 .fromPath('exercises/01_building_blocks/input.csv')  // make sure that the path towards the file is correct
                 .splitCsv(header:true)
 
@@ -1108,7 +1108,7 @@ The script in `exercises/01_building_blocks/channel_types.nf` uses two dataflow 
 ****************
 **Solution 1.5**
 
-The script should be changed to use `Channel.value` for channel `x`.
+The script should be changed to use `channel.value` for channel `x`.
 
 ```groovy
 process bar {
@@ -1121,8 +1121,8 @@ process bar {
   """
 }
 workflow {
-  def x = Channel.value(1)
-  def y = Channel.of('a', 'b', 'c')
+  def x = channel.value(1)
+  def y = channel.of('a', 'b', 'c')
   foo(x, y)
 }
 ```
@@ -1143,7 +1143,7 @@ The output that is generated in a process, needs to be emited (`emit`) in order 
 
 ```groovy
 workflow {
-    def input_ch = Channel.of(1,2,3)
+    def input_ch = channel.of(1,2,3)
     process1(input_ch)
     process2(process1.out.output_ch)
 }
@@ -1241,7 +1241,7 @@ process release_info {
 }
 
 workflow {
-    def games_ch = Channel
+    def games_ch = channel
                     .fromPath(params.input_csv)
                     .splitCsv(header:true)
                     .map{ row-> tuple(row.boardgame, row.release_year) }
@@ -1286,8 +1286,8 @@ process valuesToFile {
 // Running a workflow with the defined processes
 workflow {
     // Creating a channel
-    def numbers_ch = Channel.of(1,2,3)
-    def strings_ch = Channel.of('a','b')
+    def numbers_ch = channel.of(1,2,3)
+    def strings_ch = channel.of('a','b')
 
     valuesToFile(numbers_ch, strings_ch)
     valuesToFile.out.result_ch.view()
@@ -1396,7 +1396,6 @@ Before thinking of writing our own (plausibly) complex pipeline, we can also thi
 - [Seqera pipelines](https://seqera.io/pipelines/) contains a list of officially endorsed pipelines by Seqera.
 - Pipelines from the [nf-core community](https://nf-co.re/pipelines).
 - Pipelines from [WorkflowHub](https://workflowhub.eu/) (this is a currently ongoing effort).
-- VSN-Pipelines for single cell analysis [VSN-Pipelines](https://github.com/vib-singlecell-nf/vsn-pipelines) (No longer updated)
 
 
 ### Import a pipeline
@@ -1582,7 +1581,7 @@ process fastqc {
 }
 
 workflow {
-    def reads_ch = Channel
+    def reads_ch = channel
         .fromPath( params.reads )
 
     fastqc(reads_ch)
@@ -1645,11 +1644,24 @@ nextflow run exercises/03_first_pipeline/fastqc.nf --reads data/ggal_gut_1.fq.gz
 
 **Exercise 2.2**
 
-Change the the script in order to accept & work with paired-end reads. For this we will need to:
+Our test dataset contains 2 samples: `ggal_gut` and `ggal_liver`. Each sample has two FASTQ files: one forward read (R1) and one reverse read (R2). Instead of running FastQC for each individual FASTQ file, we now want to process both files from to the same sample together.
 
-- Adapt something in the reads parameter (`params.reads`)
-- Change how the channel is generated
-- Change the `input` declaration in the process (from `path` to a `tuple`).
+To help with this, we have provided a `samplesheet.csv` file in the exercise folder. This csv file contains one row per sample, with the sample name and the path to both fastq files. The file looks as follows:
+
+| sample      | fastq\_1                  | fastq\_2                  |
+| ----------- | ------------------------- | ------------------------- |
+| ggal\_gut   | data/ggal\_gut\_1.fq.gz   | data/ggal\_gut\_2.fq.gz   |
+| ggal\_liver | data/ggal\_liver\_1.fq.gz | data/ggal\_liver\_2.fq.gz |
+
+
+Your task:
+
+Modify the workflow so it reads this samplesheet and correctly handles paired-end data. For this you will need to:
+
+- Create a new parameter for the samplesheet to replace the reads parameter (`params.reads`)
+- Generate a channel from the samplesheet using the appropriate channel factory
+- Use the [map](https://www.nextflow.io/docs/latest/reference/operator.html#map) operator to transform each item in the channel into a tuple with the following structure: `(sample, [fastq1, fastq2])`
+- Update the `input` declaration in the process (from `path` to a `tuple`).
 
 ****************
 
@@ -1693,10 +1705,10 @@ Run in the background and push output of nextflow to the log file. No need of ex
 
 **Exercise 2.4**
 
-Check if the files exist ([`checkIfExists`](https://www.nextflow.io/docs/latest/reference/channel.html#frompath)) upon creating the channels and invoke an error by running the nextflow script with wrong reads, e.g.
+Check if the samplesheet file exist ([`checkIfExists`](https://www.nextflow.io/docs/latest/reference/channel.html#frompath)) upon creating the channels and invoke an error by running the nextflow script with wrong reads, e.g.
 
 ```
-nextflow run exercises/03_first_pipeline/fastqc.nf --reads wrongfilename
+nextflow run exercises/03_first_pipeline/fastqc.nf --samplesheet wrongfilename
 ```
 ****************
 
@@ -1796,7 +1808,7 @@ include { trimmomatic } from "../../modules/trimmomatic"
 
 // Running a workflow with the defined processes here.
 workflow {
-  def read_pairs_ch = Channel
+  def read_pairs_ch = channel
     .fromFilePairs(params.reads, checkIfExists:true)
 
   read_pairs_ch.view()
@@ -1836,8 +1848,8 @@ STAR index is a tool that creates a reference index from the reference genome so
 Solution in `exercises/03_first_pipeline/solutions/2.6_RNAseq.nf`. The following lines were added.
 
 ```groovy
-def genome = Channel.fromPath(params.genome)
-def gtf = Channel.fromPath(params.gtf)
+def genome = channel.fromPath(params.genome)
+def gtf = channel.fromPath(params.gtf)
 
 include { star_idx; star_alignment } from "../../modules/star"
 
