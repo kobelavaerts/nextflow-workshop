@@ -10,7 +10,7 @@ process fastqc {
     container 'quay.io/biocontainers/fastqc:0.11.9--0'
 
     input:
-    path read  
+    path read
     
     script:
     """
@@ -19,7 +19,7 @@ process fastqc {
 }
 
 workflow {
-    def reads_ch = Channel
+    def reads_ch = channel
         .fromPath( params.reads )
         .view()
     fastqc(reads_ch)
