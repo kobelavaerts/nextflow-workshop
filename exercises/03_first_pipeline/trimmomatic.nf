@@ -2,7 +2,7 @@
 
 
 // Similar to DSL1, the input data is defined in the beginning.
-params.reads = "${launchDir}/data/*{1,2}.fq.gz"
+params.samplesheet = "${launchDir}/exercises/03_first_pipeline/samplesheet.csv"
 params.outdir = "${launchDir}/results"
 params.threads = 2
 params.slidingwindow = "SLIDINGWINDOW:4:15"
@@ -57,9 +57,9 @@ workflow {
     Avg quality      : ${params.avgqual}
     """
     // Channels are being created. 
-    def read_pairs_ch = Channel
-        .fromFilePairs(params.reads, checkIfExists:true)
-
+    def read_pairs_ch = channel.fromPath( params.samplesheet, checkIfExists: true )
+        .splitCsv(header:true)
+        .map{ row -> tuple( row.sample, [file(row.fastq_1), file(row.fastq_2)] ) }
 
 	fastqc(read_pairs_ch) 
     trimmomatic(read_pairs_ch)

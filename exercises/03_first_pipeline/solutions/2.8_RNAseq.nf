@@ -5,7 +5,7 @@ params.datadir = "${launchDir}/data"
 params.outdir = "${launchDir}/results"
 
 // Input parameters
-params.reads = "${params.datadir}/*{1,2}.fq.gz"
+params.samplesheet = "${launchDir}/exercises/03_first_pipeline/samplesheet.csv"
 params.genome = "${params.datadir}/ggal_1_48850000_49020000.Ggal71.500bpflank.fa"
 params.gtf = "${params.datadir}/ggal_1_48850000_49020000.bed.gff"
 
@@ -49,11 +49,12 @@ workflow {
     """
 
     // Channels are being created. 
-    def read_pairs_ch = Channel
-            .fromFilePairs(params.reads, checkIfExists:true)
+    def read_pairs_ch = channel.fromPath( params.samplesheet, checkIfExists: true )
+        .splitCsv(header:true)
+        .map{ row -> tuple( row.sample, [file(row.fastq_1), file(row.fastq_2)] ) }
 
-    def genome = Channel.fromPath(params.genome)
-    def gtf = Channel.fromPath(params.gtf) 
+    def genome = channel.fromPath(params.genome)
+    def gtf = channel.fromPath(params.gtf) 
 
     // QC on raw reads
     fastqc_raw(read_pairs_ch) 
@@ -90,11 +91,12 @@ include { star_alignment as star_alignment_alt_sol } from "../../../modules/star
 workflow alternative_solution {
     // def read_pairs_ch_alt = Channel
     //   .fromFilePairs(params.reads, checkIfExists:true)
-    def read_pairs_ch = Channel
-            .fromFilePairs(params.reads, checkIfExists:true)
+    def read_pairs_ch = channel.fromPath( params.samplesheet, checkIfExists: true )
+        .splitCsv(header:true)
+        .map{ row -> tuple( row.sample, [file(row.fastq_1), file(row.fastq_2)] ) }
 
-    def genome_alt = Channel.value(file(params.genome))
-    def gtf_alt = Channel.value(file(params.gtf))
+    def genome_alt = channel.value(file(params.genome))
+    def gtf_alt = channel.value(file(params.gtf))
 
     // QC on raw reads
     fastqc_raw(read_pairs_ch) 

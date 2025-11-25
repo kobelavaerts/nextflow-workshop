@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-params.reads = "${launchDir}/data/*{1,2}.fq.gz"
+params.samplesheet = "${launchDir}/exercises/03_first_pipeline/samplesheet.csv"
 
 /**
  * Quality control fastq
@@ -19,8 +19,9 @@ process fastqc {
 }
 
 workflow {
-    def reads_ch = Channel
-        .fromFilePairs( params.reads, checkIfExists:true )
+    def reads_ch = channel.fromPath( params.samplesheet, checkIfExists: true )
+        .splitCsv(header:true)
+        .map{ row -> tuple( row.sample, [file(row.fastq_1), file(row.fastq_2)] ) }
         .view()
 
     fastqc(reads_ch)
