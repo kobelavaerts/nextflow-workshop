@@ -3,17 +3,15 @@
 // set default input parameters (these can be altered by calling their flag on the command line, e.g., nextflow run main.nf --reads 'data2/*_R{1,2}.fastq')
 params.samplesheet = "${launchDir}/samplesheet_project.csv"
 params.outdir = "${launchDir}/output"
-params.fw_primer = "GTGCCAGCMGCCGCGGTAA"
-params.fw_primer_rev_comp = "TTACCGCGGCKGCTGGCAC"
-params.rv_primer = "GGACTACHVHHHTWTCTAAT"
-params.rv_primer_rev_comp = "ATTAGAWADDDBDGTAGTCC"
+params.fw_primer = "GTGCCAGCAGCCGCGGTAA"
+params.rv_primer = "GGACTACACGGGTTTCTAAT"
 
 //set the path to the script to run in the DADA2 process (you can also make a folder 'bin' and put this script in there so it will automatically be added to nextflow's path)
 params.script1 = "${projectDir}/reads2counts.r"
 
 // include processes and subworkflows to make them available for use in this script 
 include { check_QC as check_QC_raw; check_QC as check_QC_trimmed } from "./modules/QC" 
-include { CUTADAPT } from "./modules/trimming"
+include { FASTP } from "./modules/trimming"
 include { DADA2 } from "./modules/reads2counts"
 
 
@@ -40,9 +38,7 @@ workflow {
         - reads : ${params.reads}
         - output directory : ${params.outdir}
         - forward primer sequence : ${params.fw_primer}
-        - forward primer reverse complement sequence : ${params.fw_primer_rev_comp}
         - reverse primer sequence : ${params.rv_primer}
-        - reverse primer reverse complement sequence : ${params.rv_primer_rev_comp}
 
     ==============================================================================================
     """.stripIndent()
@@ -59,20 +55,19 @@ workflow {
     // step1 = channel.value("raw")
     // check_QC_raw(step1, pe_reads_ch)
 
-    //pass the raw reads and the primer sequences to the cutadapt process
-    CUTADAPT(pe_reads_ch)
+    //pass the raw reads and the primer sequences to the fastp process
+    FASTP(pe_reads_ch)
 
     //pass the 'step' and the trimmed reads to the QC subworkflow
-    check_QC_trimmed("trimmed", CUTADAPT.out)
+    check_QC_trimmed("trimmed", FASTP.out)
     
     //pass the paths to the reads to the DADA2 process
-    def dada2_input = CUTADAPT.out
+    def dada2_input = FASTP.out
         .map{_sample, reads -> reads}
         .collect()
-    
 
     // you could also add the closure to the collect operator to do this in one step
-    // dada2_input = CUTADAPT.out
+    // dada2_input = FASTP.out
     //     .collect{x -> x[1]}
 
     DADA2(dada2_input)

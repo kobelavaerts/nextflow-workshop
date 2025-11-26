@@ -2571,13 +2571,13 @@ The following docker containers will work well with Nextflow for the pipeline yo
 * multiqc: `multiqc/multiqc:v1.25.1`
 * DADA2: `blekhmanlab/dada2:1.26.0` 
 * Python: `python:slim-bullseye` 
-* Cutadapt: `quay.io/biocontainers/cutadapt:4.7--py310h4b81fae_1`
+* Fastp: `staphb/fastp:1.0.1`
 
 MultiQC is a tool to summarize quality control metrics coming from different tools for multiple samples. E.g. this is used to create a summary of all quality control metrics determined by FastQ for all samples in the pipeline run.
 
 DADA2 is a tool to identify and quantify the microorganisms present from (amplicon) sequencing data.
 
-Cutadapt is an alternative of Trimmomatic for trimming FASTQ reads.
+Fastp is an alternative of Trimmomatic for trimming FASTQ reads.
 
 </div>
 
@@ -2603,13 +2603,13 @@ If this all works, you should be able to take a look at the outputted `.html` re
 
 Looking at the MultiQC report, our reads don’t look that fantastic at this point, so we should probably do something about that. 
 
-We can use a publicly available tool called Cutadapt: 
+We can use a publicly available tool called [Fastp](https://github.com/OpenGene/fastp): 
 
 - to trim off the primers
 - to trim and filter low-quality reads
 - to remove very short reads and reads containing unknown bases (*i.e.,* ‘N’)
 
-Cutadapt however requires us to specify the forward and reverse primers, as well as their reverse [complements](http://www.reverse-complement.com/ambiguity.html). The forward and reverse primers we can find in the paper: `GTGCCAGCMGCCGCGGTAA` and `GGACTACHVHHHTWTCTAAT`, the reverse complements of these are `TTACCGCGGCKGCTGGCAC` and `ATTAGAWADDDBDGTAGTCC` respectively.
+Fastp allows us to specify the forward and reverse primer sequences that should be trimmed off the reads. We can find the primer sequences in the paper. Forward primer: `GTGCCAGCAGCCGCGGTAA`, and reverse primer: `GGACTACACGGGTTTCTAAT`.
 
 
 <div class="admonition admonition-abstract">
@@ -2617,23 +2617,27 @@ Cutadapt however requires us to specify the forward and reverse primers, as well
 Write a process that executes Cutadapt to filter and trim the reads.
 </div>
 
-<details>
 
-<summary>Hint</summary>
+<div class="admonition admonition-info">
+
+<p class="admonition-title">Hint</p>
 
 In bash, the code for this would look something like this:
 
 ```bash
-cutadapt -a ^FW_PRIMER...REVERSECOMP_RV_PRIMER \\
-				 -A ^RV_PRIMER...REVERSECOMP_FW_PRIMER \\
-				 --quality-cutoff 28 \\
-				 --max-n 0 \\
-				 --minimum-length 30 \\
-				 --output SAMPLE_R1_TRIMMED.FASTQ --paired-output SAMPLE_R2_TRIMMED.FASTQ \\
-				 SAMPLE_R1.FASTQ SAMPLE_R2.FASTQ
+fastp --in1 SAMPLE_R1.fastq \\
+        --in2 SAMPLE_R2.fastq \\
+        --out1 SAMPLE_R1_trimmed.fastq \\
+        --out2 SAMPLE_R2_trimmed.fastq \\
+        --qualified_quality_phred 28 \\
+        --cut_tail \\
+        --length_required 30 \\
+        --n_base_limit 0 \\
+        --adapter_sequence FW_PRIMER \\
+        --adapter_sequence_r2 RV_PRIMER
 ```
+</div>
 
-</details>
 
 #### Step 3: Re-evaluate
 
