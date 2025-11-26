@@ -5,7 +5,7 @@ params.datadir = "${launchDir}/data"
 params.outdir = "${launchDir}/results"
 
 // Input parameters
-params.reads = "${params.datadir}/*{1,2}.fq.gz"
+params.samplesheet = "${launchDir}/exercises/03_first_pipeline/samplesheet.csv"
 params.transcriptome = "${params.datadir}/ggal_1_48850000_49020000.Ggal71.500bpflank.fa"
 
 // Trimmomatic
@@ -43,10 +43,11 @@ workflow {
     """
 
     // Channels are being created. 
-    def read_pairs_ch = Channel
-            .fromFilePairs(params.reads, checkIfExists:true)
+    def read_pairs_ch = channel.fromPath( params.samplesheet, checkIfExists: true )
+        .splitCsv(header:true)
+        .map{ row -> tuple( row.sample, [file(row.fastq_1), file(row.fastq_2)] ) }
 
-    def transcriptome = Channel.fromPath(params.transcriptome)
+    def transcriptome = channel.fromPath(params.transcriptome)
 
     // QC on raw reads
     fastqc_raw(read_pairs_ch) 

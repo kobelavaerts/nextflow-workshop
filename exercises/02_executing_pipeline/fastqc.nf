@@ -19,7 +19,7 @@ process fastqc {
 }
 
 workflow {
-    def reads_ch = Channel
+    def reads_ch = channel
         .fromPath( params.reads )
         .view()
 

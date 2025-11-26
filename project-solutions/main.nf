@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 // set default input parameters (these can be altered by calling their flag on the command line, e.g., nextflow run main.nf --reads 'data2/*_R{1,2}.fastq')
-params.reads = 'data1/*_R{1,2}.fastq'
+params.samplesheet = "${launchDir}/samplesheet_project.csv"
 params.outdir = "${launchDir}/output"
 params.fw_primer = "GTGCCAGCMGCCGCGGTAA"
 params.fw_primer_rev_comp = "TTACCGCGGCKGCTGGCAC"
@@ -48,8 +48,9 @@ workflow {
     """.stripIndent()
 
     // set input data
-    def pe_reads_ch = Channel
-        .fromFilePairs(params.reads , checkIfExists:true)
+    def pe_reads_ch = channel.fromPath( params.samplesheet, checkIfExists: true )
+        .splitCsv(header:true)
+        .map{ row -> tuple( row.sample, [file(row.fastq_1), file(row.fastq_2)] ) }
 
     //pass the 'step' and the raw reads to the QC subworkflow
     check_QC_raw("raw", pe_reads_ch)

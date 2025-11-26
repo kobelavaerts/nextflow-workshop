@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 // The input data is defined in the beginning.
-params.reads = "${launchDir}/data/*{1,2}.fq.gz"
+params.samplesheet = "${launchDir}/exercises/03_first_pipeline/samplesheet.csv"
 params.outdir = "${launchDir}/results"
 
 // Definition of a process
@@ -32,8 +32,9 @@ workflow {
     """
 
     // Also channels are being created. 
-    def read_pairs_ch = Channel
-        .fromFilePairs(params.reads, checkIfExists:true)
+    def read_pairs_ch = channel.fromPath( params.samplesheet, checkIfExists: true )
+        .splitCsv(header:true)
+        .map{ row -> tuple( row.sample, [file(row.fastq_1), file(row.fastq_2)] ) }
 	    .view()
 
 	fastqc(read_pairs_ch) 

@@ -1,0 +1,6 @@
+sample,fastq_1,fastq_2
+DC01,data1/DC01_R1.fastq,data1/DC01_R2.fastq
+DC02,data1/DC02_R1.fastq,data1/DC02_R2.fastq
+DC03,data1/DC03_R1.fastq,data1/DC03_R2.fastq
+DC04,data1/DC04_R1.fastq,data1/DC04_R2.fastq
+DC05,data1/DC05_R1.fastq,data1/DC05_R2.fastq

@@ -8,7 +8,7 @@ params.datadir = "${launchDir}/data"
 params.outdir = "${launchDir}/results"
 
 // Input parameters
-params.reads = "${params.datadir}/*{1,2}.fq.gz"
+params.samplesheet = "${launchDir}/exercises/03_first_pipeline/samplesheet.csv"
 params.genome = "${params.datadir}/ggal_1_48850000_49020000.Ggal71.500bpflank.fa"
 params.gtf = "${params.datadir}/ggal_1_48850000_49020000.bed.gff"
 
@@ -48,8 +48,9 @@ workflow {
     ================================
     """
     // Also channels are being created. 
-    def read_pairs_ch = Channel
-            .fromFilePairs(params.reads, checkIfExists:true)
+    def read_pairs_ch = channel.fromPath( params.samplesheet, checkIfExists: true )
+        .splitCsv(header:true)
+        .map{ row -> tuple( row.sample, [file(row.fastq_1), file(row.fastq_2)] ) }
 
     // Define the channels for the genome and reference file
     // ...
