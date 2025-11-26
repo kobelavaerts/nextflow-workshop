@@ -2,7 +2,7 @@
 
 process FASTP {
     // DIRECTIVES: set the docker container, the directory to output to, and a tag to follow along which sample is currently being processed
-    container 'staphb/fastp:1.0.1'
+    container 'quay.io/biocontainers/fastp:1.0.1--heae3180_0'
     publishDir "${params.outdir}/fastp", mode: 'copy', overwrite: true
     tag "${sample}"
 

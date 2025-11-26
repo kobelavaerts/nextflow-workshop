@@ -2571,7 +2571,7 @@ The following docker containers will work well with Nextflow for the pipeline yo
 * multiqc: `multiqc/multiqc:v1.25.1`
 * DADA2: `blekhmanlab/dada2:1.26.0` 
 * Python: `python:slim-bullseye` 
-* Fastp: `staphb/fastp:1.0.1`
+* Fastp: `quay.io/biocontainers/fastp:1.0.1--heae3180_0`
 
 MultiQC is a tool to summarize quality control metrics coming from different tools for multiple samples. E.g. this is used to create a summary of all quality control metrics determined by FastQ for all samples in the pipeline run.
 
