@@ -1,9 +1,9 @@
 #!/usr/bin/env nextflow
 
-process CUTADAPT {
+process FASTP {
     // DIRECTIVES: set the docker container, the directory to output to, and a tag to follow along which sample is currently being processed
-    container 'quay.io/biocontainers/cutadapt:4.7--py310h4b81fae_1'
-    publishDir "${params.outdir}/cutadapt", mode: 'copy', overwrite: true
+    container 'quay.io/biocontainers/fastp:1.0.1--heae3180_0'
+    publishDir "${params.outdir}/fastp", mode: 'copy', overwrite: true
     tag "${sample}"
 
     input:
@@ -14,13 +14,15 @@ process CUTADAPT {
 
     script:
     """
-    cutadapt -a ^${params.fw_primer}...${params.rv_primer_rev_comp} \
-        -A ^${params.rv_primer}...${params.fw_primer_rev_comp} \
-        --quality-cutoff 28 \
-        --minimum-length 30 \
-        --max-n 0 \
-        --output ${sample}_R1_trimmed.fastq \
-        --paired-output ${sample}_R2_trimmed.fastq \
-        ${cookies[0]} ${cookies[1]}
+    fastp --in1 ${cookies[0]} \
+        --in2 ${cookies[1]} \
+        --out1 ${sample}_R1_trimmed.fastq \
+        --out2 ${sample}_R2_trimmed.fastq \
+        --qualified_quality_phred 28 \
+        --cut_tail \
+        --length_required 30 \
+        --n_base_limit 0 \
+        --adapter_sequence ${params.fw_primer} \
+        --adapter_sequence_r2 ${params.rv_primer}
     """
 }
