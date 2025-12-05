@@ -1661,7 +1661,7 @@ Modify the workflow so it reads this samplesheet and correctly handles paired-en
 - Create a new parameter for the samplesheet to replace the reads parameter (`params.reads`)
 - Generate a channel from the samplesheet using the appropriate channel factory
 - Use the [map](https://www.nextflow.io/docs/latest/reference/operator.html#map) operator to transform each item in the channel into a tuple with the following structure: `[sample, [fastq1, fastq2]]`
-- You will need to use a function described in the [namespace documentation](https://www.nextflow.io/docs/latest/reference/stdlib-namespaces.html) to turn the strings with relative paths into actual files.
+- You will need to use a function described in the [namespace documentation](https://www.nextflow.io/docs/latest/reference/stdlib-namespaces.html) to turn the strings with relative paths into actual file objects.
 - Update the `input` declaration in the process (from `path` to a `tuple`).
 
 ****************
